@@ -2,6 +2,7 @@
 
 namespace Rector\NodeTypeResolver;
 
+use PhpParser\Node\Scalar\String_;
 use Countable;
 use Nette\Utils\Strings;
 use PhpParser\Node;
@@ -285,7 +286,7 @@ final class NodeTypeResolver
 
     public function getNodeStaticType(Node $node): ?Type
     {
-        if ($node instanceof Node\Scalar\String_) {
+        if ($node instanceof String_) {
             return new ConstantStringType($node->value);
         }
 

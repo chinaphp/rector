@@ -2,6 +2,12 @@
 
 namespace Rector\CodeQuality\Rector\For_;
 
+use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Expr\Assign;
+use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\PreInc;
+use PhpParser\Node\Expr\PostInc;
+use PhpParser\Node\Expr;
 use Doctrine\Common\Inflector\Inflector;
 use PhpParser\Node;
 use PhpParser\Node\Expr\BinaryOp\Greater;
@@ -25,7 +31,7 @@ final class ForToForeachRector extends AbstractRector
     private $countValueName;
 
     /**
-     * @var Node\Expr|null
+     * @var Expr|null
      */
     private $iteratedExpr;
 
@@ -108,30 +114,30 @@ CODE_SAMPLE
 
         $iteratedVariableSingle = Inflector::singularize($iteratedVariable);
 
-        $foreach = new Foreach_($this->iteratedExpr, new Node\Expr\Variable($iteratedVariableSingle));
+        $foreach = new Foreach_($this->iteratedExpr, new Variable($iteratedVariableSingle));
         $foreach->stmts = $node->stmts;
 
         if ($this->keyValueName === null) {
             return null;
         }
 
-        $foreach->keyVar = new Node\Expr\Variable($this->keyValueName);
+        $foreach->keyVar = new Variable($this->keyValueName);
 
         return $foreach;
     }
 
     /**
-     * @param Node\Expr[] $initExprs
+     * @param Expr[] $initExprs
      */
     private function matchInit(array $initExprs): void
     {
         foreach ($initExprs as $initExpr) {
-            if ($initExpr instanceof Node\Expr\Assign) {
+            if ($initExpr instanceof Assign) {
                 if ($this->isValue($initExpr->expr, 0)) {
                     $this->keyValueName = $this->getName($initExpr->var);
                 }
 
-                if ($initExpr->expr instanceof Node\Expr\FuncCall && $this->isName($initExpr->expr, 'count')) {
+                if ($initExpr->expr instanceof FuncCall && $this->isName($initExpr->expr, 'count')) {
                     $this->countValueName = $this->getName($initExpr->var);
                     $this->iteratedExpr = $initExpr->expr->args[0]->value;
                 }
@@ -140,7 +146,7 @@ CODE_SAMPLE
     }
 
     /**
-     * @param Node\Expr[] $condExprs
+     * @param Expr[] $condExprs
      */
     private function isConditionMatch(array $condExprs): bool
     {
@@ -157,9 +163,9 @@ CODE_SAMPLE
         }
 
         // count($values)
-        if ($condExprs[0]->right instanceof Node\Expr\FuncCall) {
+        if ($condExprs[0]->right instanceof FuncCall) {
             if ($this->isName($condExprs[0]->right, 'count')) {
-                /** @var Node\Expr\FuncCall $countFuncCall */
+                /** @var FuncCall $countFuncCall */
                 $countFuncCall = $condExprs[0]->right;
                 $this->iteratedExpr = $countFuncCall->args[0]->value;
 
@@ -171,7 +177,7 @@ CODE_SAMPLE
     }
 
     /**
-     * @param Node\Expr[] $loopExprs
+     * @param Expr[] $loopExprs
      * $param
      */
     private function isLoopMatch(array $loopExprs): bool
@@ -184,7 +190,7 @@ CODE_SAMPLE
             return false;
         }
 
-        if ($loopExprs[0] instanceof Node\Expr\PreInc || $loopExprs[0] instanceof Node\Expr\PostInc) {
+        if ($loopExprs[0] instanceof PreInc || $loopExprs[0] instanceof PostInc) {
             return $this->isName($loopExprs[0]->var, $this->keyValueName);
         }
 
@@ -199,7 +205,7 @@ CODE_SAMPLE
     }
 
     /**
-     * @param Node\Expr[] $condExprs
+     * @param Expr[] $condExprs
      */
     private function isSmallerOrGreater(array $condExprs, string $keyValueName, string $countValueName): bool
     {

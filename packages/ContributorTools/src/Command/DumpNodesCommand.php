@@ -2,6 +2,7 @@
 
 namespace Rector\ContributorTools\Command;
 
+use PhpParser\Node\Expr\ArrowFunction;
 use Nette\Utils\Strings;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
@@ -177,7 +178,7 @@ final class DumpNodesCommand extends AbstractCommand
             if ($contructorReflection->getNumberOfRequiredParameters() === 0) {
                 $node = $nodeClassReflection->newInstance();
                 // special case
-                if ($node instanceof Node\Expr\ArrowFunction) {
+                if ($node instanceof ArrowFunction) {
                     $node->expr = new LNumber(1);
                 }
 
